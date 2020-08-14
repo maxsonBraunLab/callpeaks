@@ -4,7 +4,7 @@ Custom peak caller for CUT&amp;TAG data relies heavily on the [Regulatory Genomi
 
 ## Setup
 
-Clone this repository, or download the file `call-peaks.py`.
+Clone this repository, or download the file `wget https://github.com/maxsonBraunLab/callpeaks/blob/master/callpeaks.py`. Then set up dependencies using conda.
 
 ```
 # create a conda environment with necessary dependencies
