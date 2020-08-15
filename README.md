@@ -8,8 +8,9 @@ Clone this repository, or download the file `wget https://github.com/maxsonBraun
 
 ```
 # create a conda environment with necessary dependencies
-conda create -n callpeaks rgt numpy pandas
+conda create -n callpeaks numpy pandas scipy python
 conda activate callpeaks
+pip install rgt
 
 ./callpeaks.py -h
 usage: callpeaks.py [-h] -b BAM -o OUTFILE -cs CHROMSIZES [-pv PVALUE] [-md MAXDUPS] [-cp CORRECT_PVAL]
