@@ -25,13 +25,17 @@ jobs:
         with:
           activate-environment: callpeaks-env
           environment-file: callpeaks-env.yml  
-          python-version: 3.6
+          python-version: 3.7
       
       # Runs a single command using the runners shell
       - name: Conda env verify
         run: | 
           conda info
           conda list
+    
+     # Print the current Python version
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
 
       # Runs a set of commands using the runners shell
       - name: Print help
