@@ -1,3 +1,5 @@
+![TestCallpeaks](https://github.com/maxsonBraunLab/callpeaks/workflows/TestCallpeaks/badge.svg?branch=master)
+
 # callpeaks
 
 Custom peak caller for CUT&amp;TAG data relies heavily on the [Regulatory Genomics Toolbox](https://github.com/CostaLab/reg-gen) API. 
