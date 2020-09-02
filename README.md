@@ -9,12 +9,12 @@ Custom peak caller for CUT&amp;TAG data relies heavily on the [Regulatory Genomi
 Clone this repository, or download the file `wget https://github.com/maxsonBraunLab/callpeaks/blob/master/callpeaks.py`. Then set up dependencies using conda.
 
 ```
-# create a conda environment with necessary dependencies
-conda create -n callpeaks numpy pandas scipy python
-conda activate callpeaks
-pip install rgt
+# create a conda environment from the environment file
+cd callpeaks
+conda env create -f callpeaks-env.yml
+conda activate callpeaks-env
 
-./callpeaks.py -h
+python callpeaks.py -h
 usage: callpeaks.py [-h] -b BAM -o OUTFILE -cs CHROMSIZES [-pv PVALUE] [-md MAXDUPS] [-cp CORRECT_PVAL]
 
 Call peaks on CUTTAG bam files
