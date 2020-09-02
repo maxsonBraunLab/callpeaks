@@ -13,7 +13,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  print-help:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -29,17 +29,12 @@ jobs:
           python-version: 3.7
       
       # Runs a single command using the runners shell
-      - name: Conda env verify
+      - shell: bash -l {0}
         run: | 
           conda info
           conda list
-    
-     # Print the current Python version
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      # Runs a set of commands using the runners shell
-      - name: Print help
-        run: |
+          echo "Print python version"
+          python -c "import sys; print(sys.version)"
+          echo "Print callpeaks help"
           python callpeaks.py -h
-          echo test, and deploy your project.
+          
