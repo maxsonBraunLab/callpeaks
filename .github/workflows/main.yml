@@ -40,5 +40,5 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Print help
         run: |
-          python callpeaks.py -h
+          python3 callpeaks.py -h
           echo test, and deploy your project.
