@@ -25,6 +25,7 @@ jobs:
         with:
           activate-environment: callpeaks-env
           environment-file: callpeaks-env.yml  
+          auto-activate-base: false  
           python-version: 3.7
       
       # Runs a single command using the runners shell
@@ -40,5 +41,5 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Print help
         run: |
-          python3 callpeaks.py -h
+          python callpeaks.py -h
           echo test, and deploy your project.
