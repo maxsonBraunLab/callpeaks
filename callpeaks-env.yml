@@ -1,0 +1,14 @@
+name: callpeaks-env
+channels:
+    - conda-forge
+    - bioconda
+    - defaults
+dependencies:
+    - python==3.7
+    - numpy 
+    - scipy
+    - pandas 
+    - pybigwig
+    - pip
+    - pip:
+        - rgt
