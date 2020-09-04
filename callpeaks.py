@@ -38,6 +38,16 @@ def parseArgs():
                         help='Genome chromsizes file',
                         required=True,
                         type=str)
+    parser.add_argument('-minreads', '--minreads',
+                        help='Minimum number of reads ',
+                        required=False,
+                        default=15,
+                        type=float)
+    parser.add_argument('-minsize', '--minsize',
+                        help='Only output peaks greater than or equal to -min-size',
+                        required=False,
+                        default=300,
+                        type=float)
     parser.add_argument('-pv', '--pvalue',
                         help='Pvalue threshold for binomial peak test (default 0.05)',
                         required=False,
@@ -62,8 +72,7 @@ def isTool(name):
     return which(name) is not None
 
 
-def filter_peaks(c, empirical_s, empirical_p,
-                 clookup, pvalue_theshold=0.05, min_reads=15):
+def filter_bins(c, clookup, min_reads, pvalue_theshold=0.05):
     '''
     Check if bin has more reads than expected by chance with binom_test.
     Ignores bins with fewer than min_reads.
@@ -72,7 +81,7 @@ def filter_peaks(c, empirical_s, empirical_p,
     return True if p < pvalue_theshold else False
 
 
-def call_peaks(bam, maxdups, pval, min_reads=10, genome="hg38"):
+def call_peaks(bam, maxdups, pval, min_reads, genome="hg38"):
     '''
     Call peaks on bam file using pvalue and binomial model.
     Returns GenomeRegionSet with peaks, and CoverageSet with signal.
@@ -110,7 +119,7 @@ def call_peaks(bam, maxdups, pval, min_reads=10, genome="hg38"):
     print("calculating peaks...")
     # iterate through bins in genome, store peaks
     for i, c in enumerate(cov.overall_cov):
-        if filter_peaks(c, s, p, d):
+        if filter_bins(c, d, min_reads):
             chrom, s, e = cov.index2coordinates(i, rs)
             res.add(GenomicRegion(chrom, s, e+1, data=d[c]))
 
@@ -123,7 +132,7 @@ def call_peaks(bam, maxdups, pval, min_reads=10, genome="hg38"):
     return rc, cov
 
 
-def write_bed(res, file):
+def write_bed(res, file, minSize):
     '''Write peak result to bed file'''
     with open(file, 'w') as f:
         for i, c in enumerate(res):
@@ -132,8 +141,9 @@ def write_bed(res, file):
             if c.initial > c.final:
                 st = c.final
                 en = c.initial
-                f.write(f"{c.chrom}\t{st}\t{en}\tPeak{i}\t{p}\t.\n")
-            else:
+                if en-st >= minSize:
+                    f.write(f"{c.chrom}\t{st}\t{en}\tPeak{i}\t{p}\t.\n")
+            elif c.final-c.initial >= minSize:
                 f.write(f"{c.chrom}\t{c.initial}\t{c.final}\tPeak{i}\t{p}\t.\n")
 
 
@@ -202,19 +212,21 @@ def main():
     cf = args.chromsizes
     maxdups = args.maxdups
     pvalue = args.pvalue
+    minreads = args.minreads
+    minsize = args.minsize
 
     corr = args.correct_pval
     if corr not in ["bh", "by", None]:
         print("Invalid correction method (please pass either 'bh' or 'by'")
         sys.exit
 
-    res, cov = call_peaks(bf, maxdups, pvalue, min_reads=10)
+    res, cov = call_peaks(bf, maxdups, pvalue, min_reads=minreads)
 
     bwfile = of+".bw"
     write_bigwig(cov, bwfile, cf)
 
     outbed = of+"_peaks.bed"
-    write_bed(res, outbed)
+    write_bed(res, outbed, minsize)
 
     if corr is not None:
         dat = pd.read_csv(outbed,
