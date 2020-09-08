@@ -190,9 +190,10 @@ def write_bigwig(cov, filename, chrom_file, save_wig=False):
         sys.exit(1)
 
     c = ['wigToBigWig', "-clip", tmp_path, chrom_file, filename]
-    rc = subprocess.call(c)
-    if rc != 0:
-        print(f"return {rc}")
+    rc = subprocess.run(c, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if rc.returncode != 0:
+        print(f"return: {rc}")
+
 
     if not save_wig:
         os.remove(tmp_path)
@@ -218,7 +219,7 @@ def main():
     corr = args.correct_pval
     if corr not in ["bh", "by", None]:
         print("Invalid correction method (please pass either 'bh' or 'by'")
-        sys.exit
+        sys.exit(1)
 
     res, cov = call_peaks(bf, maxdups, pvalue, min_reads=minreads)
 
