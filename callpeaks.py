@@ -85,17 +85,14 @@ def filter_bins(c, clookup, min_reads, pvalue_theshold=0.05):
     return True if p < pvalue_theshold else False
 
 
-def call_peaks(bam, cfile, maxdups, pval, min_reads, genome="hg38"):
+def call_peaks(bam, cfile, csizes, maxdups, pval, min_reads, genome="hg38"):
     '''
     Call peaks on bam file using pvalue and binomial model.
     Returns GenomeRegionSet with peaks, and CoverageSet with signal.
     '''
 
-    # get genome data
-    g = GenomeData("hg38")
-
     # make chromsizes region set
-    rs = get_chrom_sizes_as_genomicregionset(g.get_chromosome_sizes())
+    rs = get_chrom_sizes_as_genomicregionset(csizes)
 
     print("calculating extension sizes...")
     # calculate ext size
@@ -110,9 +107,9 @@ def call_peaks(bam, cfile, maxdups, pval, min_reads, genome="hg38"):
         control.coverage_from_bam(bam_file=cfile, extension_size=ext, maxdup=maxdups)
         cov.subtract(control)
 
-    # calculate number of events (number of reads)
+    # total coverage
     s = np.sum(cov.overall_cov)
-    print(f"coverage: {s}")
+    print(f"total reads: {cov.reads}")
     # probability of event, a read in a bin, (avg reads/bin )/libsize
     p = np.mean(cov.overall_cov[cov.overall_cov > 0]) / s
 
@@ -236,7 +233,7 @@ def main():
         print("Invalid correction method (please pass either 'bh' or 'by'")
         sys.exit(1)
 
-    res, cov = call_peaks(bf, cf, maxdups, pvalue, min_reads=minreads)
+    res, cov = call_peaks(bf, cf,cs, maxdups, pvalue, min_reads=minreads)
     cov.normRPM()
 
     bwfile = of+".bw"
