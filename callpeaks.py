@@ -34,6 +34,10 @@ def parseArgs():
                         help='Output prefix (filename without extension)',
                         required=True,
                         type=str)
+    parser.add_argument('-cf', '--controlfile',
+                        help='Control input or IgG file to be subtracted from signal prior to peak calling',
+                        required=False,
+                        type=str)
     parser.add_argument('-cs', '--chromsizes',
                         help='Genome chromsizes file',
                         required=True,
@@ -81,11 +85,12 @@ def filter_bins(c, clookup, min_reads, pvalue_theshold=0.05):
     return True if p < pvalue_theshold else False
 
 
-def call_peaks(bam, maxdups, pval, min_reads, genome="hg38"):
+def call_peaks(bam, cfile, maxdups, pval, min_reads, genome="hg38"):
     '''
     Call peaks on bam file using pvalue and binomial model.
     Returns GenomeRegionSet with peaks, and CoverageSet with signal.
     '''
+
     # get genome data
     g = GenomeData("hg38")
 
@@ -100,9 +105,14 @@ def call_peaks(bam, maxdups, pval, min_reads, genome="hg38"):
     # calc coverage
     cov = CoverageSet('coverageset', rs)
     cov.coverage_from_bam(bam_file=bam, extension_size=ext, maxdup=maxdups)
+    if cfile is not None:
+        control = CoverageSet('contorl', rs)
+        control.coverage_from_bam(bam_file=cfile, extension_size=ext, maxdup=maxdups)
+        cov.subtract(control)
 
     # calculate number of events (number of reads)
     s = np.sum(cov.overall_cov)
+    print(f"coverage: {s}")
     # probability of event, a read in a bin, (avg reads/bin )/libsize
     p = np.mean(cov.overall_cov[cov.overall_cov > 0]) / s
 
@@ -210,7 +220,12 @@ def main():
     print(f"Will write peaks: {args.outfile}")
     of = args.outfile
 
-    cf = args.chromsizes
+    cf = args.controlfile
+    if cf is not None:
+        print(f"Using control signal: {cf}")
+        cf = args.controlfile
+
+    cs = args.chromsizes
     maxdups = args.maxdups
     pvalue = args.pvalue
     minreads = args.minreads
@@ -221,10 +236,11 @@ def main():
         print("Invalid correction method (please pass either 'bh' or 'by'")
         sys.exit(1)
 
-    res, cov = call_peaks(bf, maxdups, pvalue, min_reads=minreads)
+    res, cov = call_peaks(bf, cf, maxdups, pvalue, min_reads=minreads)
+    cov.normRPM()
 
     bwfile = of+".bw"
-    write_bigwig(cov, bwfile, cf)
+    write_bigwig(cov, bwfile, cs)
 
     outbed = of+"_peaks.bed"
     write_bed(res, outbed, minsize)
