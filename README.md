@@ -15,7 +15,9 @@ conda env create -f callpeaks-env.yml
 conda activate callpeaks-env
 
 python callpeaks.py -h
-usage: callpeaks.py [-h] -b BAM -o OUTFILE -cs CHROMSIZES [-pv PVALUE] [-md MAXDUPS] [-cp CORRECT_PVAL]
+usage: callpeaks.py [-h] -b BAM -o OUTFILE [-cf CONTROLFILE] -cs CHROMSIZES
+                    [-minreads MINREADS] [-minsize MINSIZE] [-pv PVALUE]
+                    [-md MAXDUPS] [-cp CORRECT_PVAL]
 
 Call peaks on CUTTAG bam files
 
@@ -24,13 +26,22 @@ optional arguments:
   -b BAM, --bam BAM     Bam file
   -o OUTFILE, --outfile OUTFILE
                         Output prefix (filename without extension)
+  -cf CONTROLFILE, --controlfile CONTROLFILE
+                        Control input or IgG file to be subtracted from signal
+                        prior to peak calling
   -cs CHROMSIZES, --chromsizes CHROMSIZES
                         Genome chromsizes file
+  -minreads MINREADS, --minreads MINREADS
+                        Minimum number of reads
+  -minsize MINSIZE, --minsize MINSIZE
+                        Only output peaks greater than or equal to -min-size
   -pv PVALUE, --pvalue PVALUE
                         Pvalue threshold for binomial peak test (default 0.05)
   -md MAXDUPS, --maxdups MAXDUPS
-                        Maximum number of duplicates to keep for coverage signal (-1: all, 0: none, default: -1)
+                        Maximum number of duplicates to keep for coverage
+                        signal (-1: all, 0: none)
   -cp CORRECT_PVAL, --correct-pval CORRECT_PVAL
-                        Correct p-values for multiple testing using Benjamini/Hochberg ("bh") or Benjamini/Yekutieli ("by") method
+                        Correct p-values for multiple testing using
+                        Benjamini/Hochberg ("bh") or Benjamini/Yekutieli
+                        ("by") method
 ```
-
