@@ -115,6 +115,7 @@ def call_peaks(bam, cfile, csizes, maxdups, pval, min_reads, genome="hg38"):
 
     # what is the max coverage
     maxcov = np.max(cov.overall_cov)
+    print(maxcov, maxcov+1)
 
     # create dict with probability for each count value
     mc = np.arange(0, maxcov+1)
