@@ -9,6 +9,7 @@ import os
 import sys
 import pandas as pd
 from shutil import which
+from functools import reduce
 import subprocess
 import numpy as np
 from rgt.Util import GenomeData
@@ -103,22 +104,24 @@ def call_peaks(bam, cfile, csizes, maxdups, pval, min_reads, genome="hg38"):
     cov = CoverageSet('coverageset', rs)
     cov.coverage_from_bam(bam_file=bam, extension_size=ext, maxdup=maxdups)
     if cfile is not None:
+        print(f"Using control file: {cfile}")
         control = CoverageSet('contorl', rs)
         control.coverage_from_bam(bam_file=cfile, extension_size=ext, maxdup=maxdups)
         cov.subtract(control)
+        # recalc overall coverage
+        cov.overall_cov = reduce(lambda x, y: np.concatenate((x, y)),
+                                 [cov.coverage[i] for i in range(len(cov.genomicRegions))])
 
     # total coverage
     s = np.sum(cov.overall_cov)
-    print(f"total reads: {cov.reads}")
     # probability of event, a read in a bin, (avg reads/bin )/libsize
     p = np.mean(cov.overall_cov[cov.overall_cov > 0]) / s
 
     # what is the max coverage
     maxcov = np.max(cov.overall_cov)
-    print(maxcov, maxcov+1)
 
     # create dict with probability for each count value
-    mc = np.arange(0, maxcov+1)
+    mc = np.arange(0, maxcov+1, dtype="object")
     d = {count: binom_test((count, s-count), p=p) for count in mc}
 
     # create GenomicRegionSet to hold peaks
@@ -219,10 +222,6 @@ def main():
     of = args.outfile
 
     cf = args.controlfile
-    if cf is not None:
-        print(f"Using control signal: {cf}")
-        cf = args.controlfile
-
     cs = args.chromsizes
     maxdups = args.maxdups
     pvalue = args.pvalue
