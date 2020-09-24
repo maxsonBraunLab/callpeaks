@@ -234,7 +234,7 @@ def main():
         sys.exit(1)
 
     res, cov = call_peaks(bf, cf,cs, maxdups, pvalue, min_reads=minreads)
-    cov.normRPM()
+    cov.coverage = np.array(cov.coverage, dtype="object")  * (1000000 / float(cov.reads))
 
     bwfile = of+".bw"
     write_bigwig(cov, bwfile, cs)
