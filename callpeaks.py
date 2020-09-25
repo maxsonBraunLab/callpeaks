@@ -58,11 +58,6 @@ def parseArgs():
                         required=False,
                         type=float,
                         default=0.05)
-    parser.add_argument('-md', '--maxdups',
-                        help='Maximum number of duplicates to keep for coverage signal (-1: all, 0: none)',
-                        required=False,
-                        type=int,
-                        default=-1)
     parser.add_argument('-cp', '--correct-pval',
                         help='Correct p-values for multiple testing using Benjamini/Hochberg ("bh") or Benjamini/Yekutieli ("by") method',
                         required=False,
@@ -86,7 +81,7 @@ def filter_bins(c, clookup, min_reads, pvalue_theshold=0.05):
     return True if p < pvalue_theshold else False
 
 
-def call_peaks(bam, cfile, csizes, maxdups, pval, min_reads, genome="hg38"):
+def call_peaks(bam, cfile, csizes, pval, min_reads, genome="hg38"):
     '''
     Call peaks on bam file using pvalue and binomial model.
     Returns GenomeRegionSet with peaks, and CoverageSet with signal.
@@ -102,11 +97,11 @@ def call_peaks(bam, cfile, csizes, maxdups, pval, min_reads, genome="hg38"):
     print("calculating coverage...")
     # calc coverage
     cov = CoverageSet('coverageset', rs)
-    cov.coverage_from_bam(bam_file=bam, extension_size=ext, maxdup=maxdups)
+    cov.coverage_from_bam(bam_file=bam, extension_size=ext)
     if cfile is not None:
         print(f"Using control file: {cfile}")
         control = CoverageSet('contorl', rs)
-        control.coverage_from_bam(bam_file=cfile, extension_size=ext, maxdup=maxdups)
+        control.coverage_from_bam(bam_file=cfile, extension_size=ext)
         cov.subtract(control)
         # recalc overall coverage
         cov.overall_cov = reduce(lambda x, y: np.concatenate((x, y)),
@@ -223,7 +218,6 @@ def main():
 
     cf = args.controlfile
     cs = args.chromsizes
-    maxdups = args.maxdups
     pvalue = args.pvalue
     minreads = args.minreads
     minsize = args.minsize
@@ -233,7 +227,7 @@ def main():
         print("Invalid correction method (please pass either 'bh' or 'by'")
         sys.exit(1)
 
-    res, cov = call_peaks(bf, cf,cs, maxdups, pvalue, min_reads=minreads)
+    res, cov = call_peaks(bf, cf,cs, pvalue, min_reads=minreads)
     cov.coverage = np.array(cov.coverage, dtype="object")  * (1000000 / float(cov.reads))
 
     bwfile = of+".bw"
