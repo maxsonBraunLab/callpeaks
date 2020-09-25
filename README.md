@@ -37,9 +37,6 @@ optional arguments:
                         Only output peaks greater than or equal to -min-size
   -pv PVALUE, --pvalue PVALUE
                         Pvalue threshold for binomial peak test (default 0.05)
-  -md MAXDUPS, --maxdups MAXDUPS
-                        Maximum number of duplicates to keep for coverage
-                        signal (-1: all, 0: none)
   -cp CORRECT_PVAL, --correct-pval CORRECT_PVAL
                         Correct p-values for multiple testing using
                         Benjamini/Hochberg ("bh") or Benjamini/Yekutieli
