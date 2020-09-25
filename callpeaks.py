@@ -35,9 +35,7 @@ def parseArgs():
                         required=True,
                         type=str)
     parser.add_argument('-cf', '--controlfile',
-                        help='control method for igg if "norm" will multiply by\
-                              the complement of the igg signal, if "sub" will\
-                              subtract raw signal prior to peak calling',
+                        help='control file for experiment or sample',
                         required=False,
                         type=str)
     parser.add_argument('-cs', '--chromsizes',
@@ -108,7 +106,7 @@ def norm_igg(cov, ctrl):
         cov.coverage[i] = np.rint(cov.coverage[i] * scale[i]).astype(int)
 
 
-def call_peaks(bam, csizes, pval, min_reads, cfile=None, genome="hg38"):
+def call_peaks(bam, csizes, pval, min_reads, cfile=None):
     '''
     Call peaks on bam file using pvalue and binomial model.
     Returns GenomeRegionSet with peaks, and CoverageSet with signal.
@@ -255,8 +253,7 @@ def main():
         print("Invalid correction method (please pass either 'bh' or 'by'")
         sys.exit(1)
 
-    res, cov = call_peaks(bf, cs, pvalue,
-                          cfile=cf, min_reads=minreads)
+    res, cov = call_peaks(bf, cs, pvalue, minreads, cfile=cf)
     # rpm norm the signal before writing to bigwig
     cov.coverage = np.array(cov.coverage, dtype='object') * (1e6 / float(cov.reads))
 
