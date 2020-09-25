@@ -17,7 +17,7 @@ conda activate callpeaks-env
 python callpeaks.py -h
 usage: callpeaks.py [-h] -b BAM -o OUTFILE [-cf CONTROLFILE] -cs CHROMSIZES
                     [-minreads MINREADS] [-minsize MINSIZE] [-pv PVALUE]
-                    [-md MAXDUPS] [-cp CORRECT_PVAL]
+                    [-cp CORRECT_PVAL]
 
 Call peaks on CUTTAG bam files
 
@@ -27,8 +27,9 @@ optional arguments:
   -o OUTFILE, --outfile OUTFILE
                         Output prefix (filename without extension)
   -cf CONTROLFILE, --controlfile CONTROLFILE
-                        Control input or IgG file to be subtracted from signal
-                        prior to peak calling
+                        control method for igg if "norm" will multiply by the
+                        complement of the igg signal, if "sub" will subtract
+                        raw signal prior to peak calling
   -cs CHROMSIZES, --chromsizes CHROMSIZES
                         Genome chromsizes file
   -minreads MINREADS, --minreads MINREADS

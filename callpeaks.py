@@ -12,7 +12,6 @@ from shutil import which
 from functools import reduce
 import subprocess
 import numpy as np
-from rgt.Util import GenomeData
 from rgt.helper import get_chrom_sizes_as_genomicregionset
 from rgt.THOR.get_extension_size import get_extension_size
 from rgt.CoverageSet import CoverageSet
@@ -36,7 +35,9 @@ def parseArgs():
                         required=True,
                         type=str)
     parser.add_argument('-cf', '--controlfile',
-                        help='Control input or IgG file to be subtracted from signal prior to peak calling',
+                        help='control method for igg if "norm" will multiply by\
+                              the complement of the igg signal, if "sub" will\
+                              subtract raw signal prior to peak calling',
                         required=False,
                         type=str)
     parser.add_argument('-cs', '--chromsizes',
@@ -49,17 +50,20 @@ def parseArgs():
                         default=15,
                         type=float)
     parser.add_argument('-minsize', '--minsize',
-                        help='Only output peaks greater than or equal to -min-size',
+                        help='Only output peaks greater than\
+                              or equal to -min-size',
                         required=False,
                         default=300,
                         type=float)
     parser.add_argument('-pv', '--pvalue',
-                        help='Pvalue threshold for binomial peak test (default 0.05)',
+                        help='Pvalue threshold for binomial peak test\
+                             (default 0.05)',
                         required=False,
                         type=float,
                         default=0.05)
     parser.add_argument('-cp', '--correct-pval',
-                        help='Correct p-values for multiple testing using Benjamini/Hochberg ("bh") or Benjamini/Yekutieli ("by") method',
+                        help='Correct p-values for multiple testing using\
+                             Benjamini/Hochberg ("bh") or Benjamini/Yekutieli ("by") method',
                         required=False,
                         type=str,
                         default="bh")
@@ -81,7 +85,30 @@ def filter_bins(c, clookup, min_reads, pvalue_theshold=0.05):
     return True if p < pvalue_theshold else False
 
 
-def call_peaks(bam, cfile, csizes, pval, min_reads, genome="hg38"):
+def norm(cov):
+    '''Set 1/0 and 0/0 case to 0'''
+    for c in cov:
+        c[np.isnan(c)] = 0
+        c[np.isinf(c)] = 0
+        c[c > 1] = 0
+    return cov
+
+
+def norm_igg(cov, ctrl):
+    '''
+    Calculates the fraction of igg per coverage bin
+    and scales coverage to the complement.
+    coverage = coverage * (1-(iggRPM/covRPM))
+    '''
+    cov_rpm = np.array(cov.coverage, dtype='object') * (1e6 / float(cov.reads))
+    ctrl_rpm = np.array(ctrl.coverage, dtype='object') * (1e6 / float(ctrl.reads))
+    frac = np.divide(ctrl_rpm, cov_rpm)
+    scale = 1-norm(frac)  # complement igg fraction
+    for i in range(len(cov.coverage)):
+        cov.coverage[i] = np.rint(cov.coverage[i] * scale[i]).astype(int)
+
+
+def call_peaks(bam, csizes, pval, min_reads, cfile=None, genome="hg38"):
     '''
     Call peaks on bam file using pvalue and binomial model.
     Returns GenomeRegionSet with peaks, and CoverageSet with signal.
@@ -102,7 +129,9 @@ def call_peaks(bam, cfile, csizes, pval, min_reads, genome="hg38"):
         print(f"Using control file: {cfile}")
         control = CoverageSet('contorl', rs)
         control.coverage_from_bam(bam_file=cfile, extension_size=ext)
-        cov.subtract(control)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            norm_igg(cov, control)
+
         # recalc overall coverage
         cov.overall_cov = reduce(lambda x, y: np.concatenate((x, y)),
                                  [cov.coverage[i] for i in range(len(cov.genomicRegions))])
@@ -200,7 +229,6 @@ def write_bigwig(cov, filename, chrom_file, save_wig=False):
     if rc.returncode != 0:
         print(f"return: {rc}")
 
-
     if not save_wig:
         os.remove(tmp_path)
 
@@ -213,7 +241,7 @@ def main():
     print(f"Using bam: {args.bam}")
     bf = args.bam
 
-    print(f"Will write peaks: {args.outfile}")
+    print(f"Will write peaks: {args.outfile}_peaks.bed")
     of = args.outfile
 
     cf = args.controlfile
@@ -227,8 +255,10 @@ def main():
         print("Invalid correction method (please pass either 'bh' or 'by'")
         sys.exit(1)
 
-    res, cov = call_peaks(bf, cf,cs, pvalue, min_reads=minreads)
-    cov.coverage = np.array(cov.coverage, dtype="object")  * (1000000 / float(cov.reads))
+    res, cov = call_peaks(bf, cs, pvalue,
+                          cfile=cf, min_reads=minreads)
+    # rpm norm the signal before writing to bigwig
+    cov.coverage = np.array(cov.coverage, dtype='object') * (1e6 / float(cov.reads))
 
     bwfile = of+".bw"
     write_bigwig(cov, bwfile, cs)
