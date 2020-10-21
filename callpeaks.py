@@ -179,6 +179,12 @@ def write_bed(res, file, minSize):
             elif c.final-c.initial >= minSize:
                 f.write(f"{c.chrom}\t{c.initial}\t{c.final}\tPeak{i}\t{p}\t.\n")
 
+def write_counts(outsamp, dat):
+    file = outsamp+".counts.txt"
+    samp=os.path.basename(outsamp)
+    with open(file, 'w') as f:
+        f.write(f"{samp}\t{len(dat.index)}\n")
+
 
 def write_wig(cov, filename):
     """Output coverage in wig format.
@@ -239,7 +245,7 @@ def main():
     print(f"Using bam: {args.bam}")
     bf = args.bam
 
-    print(f"Will write peaks: {args.outfile}_peaks.bed")
+    print(f"Will write peaks: {args.outfile}_peaks.tsv")
     of = args.outfile
 
     cf = args.controlfile
@@ -260,7 +266,7 @@ def main():
     bwfile = of+".bw"
     write_bigwig(cov, bwfile, cs)
 
-    outbed = of+"_peaks.bed"
+    outbed = of+"_peaks.tsv"
     write_bed(res, outbed, minsize)
 
     if corr is not None:
@@ -276,7 +282,7 @@ def main():
         dat["score"] = dat["score"].apply(lambda x: -np.log(x))
         dat[dat.score > -np.log10(pvalue)].to_csv(outbed, sep="\t",
                                                   header=False, index=False)
-
+    write_counts(of,dat)
 
 if __name__ == "__main__":
     main()
