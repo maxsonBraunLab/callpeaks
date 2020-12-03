@@ -17,7 +17,7 @@ conda activate callpeaks-env
 python callpeaks.py -h
 usage: callpeaks.py [-h] -b BAM -o OUTFILE [-cf CONTROLFILE] -cs CHROMSIZES
                     [-minreads MINREADS] [-minsize MINSIZE] [-pv PVALUE]
-                    [-cp CORRECT_PVAL]
+                    [-bs BINSIZE] [-cp CORRECT_PVAL]
 
 Call peaks on CUTTAG bam files
 
@@ -36,6 +36,8 @@ optional arguments:
                         Only output peaks greater than or equal to -min-size
   -pv PVALUE, --pvalue PVALUE
                         Pvalue threshold for binomial peak test (default 0.05)
+  -bs BINSIZE, --binsize BINSIZE
+                        Binsize for output bigwig file (default 100)
   -cp CORRECT_PVAL, --correct-pval CORRECT_PVAL
                         Correct p-values for multiple testing using
                         Benjamini/Hochberg ("bh") or Benjamini/Yekutieli
