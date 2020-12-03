@@ -59,6 +59,12 @@ def parseArgs():
                         required=False,
                         type=float,
                         default=0.05)
+    parser.add_argument('-bs', '--binsize',
+                        help='Binsize for output bigwig file\
+                             (default 100)',
+                        required=False,
+                        type=int,
+                        default=100)
     parser.add_argument('-cp', '--correct-pval',
                         help='Correct p-values for multiple testing using\
                              Benjamini/Hochberg ("bh") or Benjamini/Yekutieli ("by") method',
@@ -106,7 +112,7 @@ def norm_igg(cov, ctrl):
         cov.coverage[i] = np.rint(cov.coverage[i] * scale[i]).astype(int)
 
 
-def call_peaks(bam, csizes, pval, min_reads, cfile=None):
+def call_peaks(bam, csizes, pval, min_reads, binsize, cfile=None):
     '''
     Call peaks on bam file using pvalue and binomial model.
     Returns GenomeRegionSet with peaks, and CoverageSet with signal.
@@ -120,9 +126,12 @@ def call_peaks(bam, csizes, pval, min_reads, cfile=None):
     ext, _ = get_extension_size(bam, start=0, end=300, stepsize=5)
 
     print("calculating coverage...")
+    stepsize = binsize // 2
+    print("using binsize: "+ str(binsize))
+    print("using stepsize: " + str(stepsize))
     # calc coverage
     cov = CoverageSet('coverageset', rs)
-    cov.coverage_from_bam(bam_file=bam, extension_size=ext)
+    cov.coverage_from_bam(bam_file=bam, extension_size=ext, binsize=binsize, stepsize=stepsize, paired_reads=True)
     if cfile is not None:
         print(f"Using control file: {cfile}")
         control = CoverageSet('contorl', rs)
@@ -253,13 +262,14 @@ def main():
     pvalue = args.pvalue
     minreads = args.minreads
     minsize = args.minsize
+    bs = args.binsize
 
     corr = args.correct_pval
     if corr not in ["bh", "by", None]:
         print("Invalid correction method (please pass either 'bh' or 'by'")
         sys.exit(1)
 
-    res, cov = call_peaks(bf, cs, pvalue, minreads, cfile=cf)
+    res, cov = call_peaks(bf, cs, pvalue, minreads, bs, cfile=cf)
     # rpm norm the signal before writing to bigwig
     cov.coverage = np.array(cov.coverage, dtype='object') * (1e6 / float(cov.reads))
 
