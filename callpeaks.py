@@ -126,12 +126,14 @@ def call_peaks(bam, csizes, pval, min_reads, binsize, cfile=None):
     ext, _ = get_extension_size(bam, start=0, end=300, stepsize=5)
 
     print("calculating coverage...")
-    stepsize = binsize // 2
-    print("using binsize: "+ str(binsize))
-    print("using stepsize: " + str(stepsize))
     # calc coverage
     cov = CoverageSet('coverageset', rs)
-    cov.coverage_from_bam(bam_file=bam, extension_size=ext, binsize=binsize, stepsize=stepsize, paired_reads=True)
+    cov.coverage_from_bam(bam_file=bam, extension_size=ext, paired_reads=True)
+
+    # calculate cov2 for output bw
+    cov2 = CoverageSet('coverageset2', rs)
+    cov2.coverage_from_bam(bam_file=bam, extension_size=ext, paired_reads=True, binsize=binsize, stepsize=binsize//2)
+
     if cfile is not None:
         print(f"Using control file: {cfile}")
         control = CoverageSet('contorl', rs)
@@ -171,7 +173,7 @@ def call_peaks(bam, csizes, pval, min_reads, binsize, cfile=None):
     # merge peaks within ext dist
     rc = res.cluster(ext)
 
-    return rc, cov
+    return rc, cov, cov2
 
 
 def write_bed(res, file, minSize):
@@ -269,13 +271,14 @@ def main():
         print("Invalid correction method (please pass either 'bh' or 'by'")
         sys.exit(1)
 
-    res, cov = call_peaks(bf, cs, pvalue, minreads, bs, cfile=cf)
+    res, cov, cov2 = call_peaks(bf, cs, pvalue, minreads, bs, cfile=cf)
+
     # rpm norm the signal before writing to bigwig
-    cov.coverage = np.array(cov.coverage, dtype='object') * (1e6 / float(cov.reads))
-
+    cov2.coverage = np.array(cov2.coverage, dtype='object') * (1e6 / float(cov2.reads))
     bwfile = of+".bw"
-    write_bigwig(cov, bwfile, cs)
+    write_bigwig(cov2, bwfile, cs)
 
+    # write peaks to file
     outbed = of+"_peaks.tsv"
     write_bed(res, outbed, minsize)
 
