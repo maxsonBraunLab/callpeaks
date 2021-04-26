@@ -1,6 +1,8 @@
 ![TestCallpeaks](https://github.com/maxsonBraunLab/callpeaks/workflows/TestCallpeaks/badge.svg?branch=master)
 
-# callpeaks
+# DEPRECATED 
+
+PLease use [gopeaks](https://github.com/maxsonBraunLab/gopeaks) for peak calling using CUT&TAG data
 
 Custom peak caller for CUT&amp;TAG data relies heavily on the [Regulatory Genomics Toolbox](https://github.com/CostaLab/reg-gen) API. 
 
